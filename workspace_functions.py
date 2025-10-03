@@ -89,3 +89,23 @@ def _get_download_url(api: JsonRpcCaller, path: str, token: str) -> str:
         return result
     except Exception as e:
         return [f"Error getting download URL: {str(e)}"]
+
+
+def workspace_upload(api: JsonRpcCaller, filename: str, token: str) -> str:
+    """
+    Create an upload URL for a file in the workspace using the JSON-RPC API.
+    
+    Args:
+        api: JsonRpcCaller instance configured with workspace URL and token
+        filename: Name of the file to create upload URL for
+        token: Authentication token for API calls
+    Returns:
+        String representation of the upload URL response
+    """
+    try:
+        result = api.call("Workspace.create", {
+            "objects": [filename]
+        }, 1, token)
+        return result
+    except Exception as e:
+        return [f"Error creating upload URL: {str(e)}"]

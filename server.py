@@ -1,6 +1,6 @@
 from flask import Flask
 from flaskmcp import create_app, tool, register_resource, register_prompt
-from workspace_functions import workspace_ls, workspace_get_file_metadata, workspace_download_file
+from workspace_functions import workspace_ls, workspace_get_file_metadata, workspace_download_file, workspace_upload
 from json_rpc import JsonRpcCaller
 import json
 import sys
@@ -53,6 +53,16 @@ def workspace_download_file_tool(token: str, path: str) -> str:
         path: Path to the file to download.
     """
     result = workspace_download_file(api, path, token)
+    return str(result)
+
+@tool(name="workspace_upload", description="Create an upload URL for a file in the workspace. Parameters: filename: str - name of the file to create upload URL for")
+def workspace_upload_tool(token: str, filename: str) -> str:
+    """Create an upload URL for a file in the workspace.
+    
+    Args:
+        filename: Name of the file to create upload URL for.
+    """
+    result = workspace_upload(api, filename, token)
     return str(result)
 
 # Optional: Add a health check route
