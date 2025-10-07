@@ -91,26 +91,50 @@ def _get_download_url(api: JsonRpcCaller, path: str, token: str) -> str:
     except Exception as e:
         return [f"Error getting download URL: {str(e)}"]
 
-def workspace_upload(api: JsonRpcCaller, filename: str, token: str) -> str:
+def _get_user_id_from_token(token: str) -> str:
+    """
+    Extract user ID from a BV-BRC/KBase style auth token.
+    Returns None if token is None or invalid.
+    """
+    if not token:
+        return None
+    try:
+        # Token format example: "un=username|..."; take first segment and strip prefix
+        return token.split('|')[0].replace('un=','')
+    except Exception:
+        return None
+
+def workspace_upload(api: JsonRpcCaller, filename: str, upload_dir: str = None, token: str = None) -> str:
     """
     Create an upload URL for a file in the workspace using the JSON-RPC API.
     
     Args:
         api: JsonRpcCaller instance configured with workspace URL and token
         filename: Name of the file to create upload URL for
-        token: Authentication token for API calls
+        upload_dir: Directory to upload the file to (defaults to /<user_id>/home)
+        token: Authentication token for API calls (required)
     Returns:
         String representation of the upload URL response with parsed metadata
     """
     try:
-        upload_dir = '/clark.cucinell@patricbrc.org/home'
+        
+        if not token:
+            return {"error": "Authentication token not provided"}
+
+        if not upload_dir:
+            user_id = _get_user_id_from_token(token)
+            if not user_id:
+                return {"error": "Unable to derive user id from token"}
+            upload_dir = '/' + user_id + '/home'
         download_url_path = os.path.join(upload_dir,os.path.basename(filename))
         # call format: workspace file location, file type, object metadata, object content
-        result = api.call("Workspace.create", {
-         "objects": [[download_url_path,'unspecified',{},'']],
-            "createUploadNodes": True,
-            "overwrite": None
-        }, 1, token)
+        result = _workspace_create(
+            api,
+            [[download_url_path, 'unspecified', {}, '']],
+            token,
+            create_upload_nodes=True,
+            overwrite=None
+        )
         
         # Parse the result if successful
         if result and len(result) > 0 and len(result[0]) > 0:
@@ -159,6 +183,24 @@ def workspace_upload(api: JsonRpcCaller, filename: str, token: str) -> str:
             
     except Exception as e:
         return {"error": f"Error creating upload URL: {str(e)}"}
+
+def _workspace_create(api: JsonRpcCaller, objects: list, token: str, create_upload_nodes: bool = True, overwrite: Any = None):
+    """
+    Helper to invoke Workspace.create via JSON-RPC.
+    """
+    try:
+        return api.call(
+            "Workspace.create",
+            {
+                "objects": objects,
+                "createUploadNodes": create_upload_nodes,
+                "overwrite": overwrite
+            },
+            1,
+            token
+        )
+    except Exception as e:
+        return [f"Error creating workspace object: {str(e)}"]
 
 def _upload_file_to_url(filename: str, upload_url: str, token: str) -> dict:
     """
