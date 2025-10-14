@@ -1,6 +1,6 @@
 
 from fastmcp import FastMCP
-from workspace_functions import workspace_ls, workspace_get_file_metadata, workspace_download_file
+from workspace_functions import workspace_ls, workspace_get_file_metadata, workspace_download_file, workspace_upload
 from json_rpc import JsonRpcCaller
 from typing import List
 
@@ -45,4 +45,14 @@ def register_workspace_tools(mcp: FastMCP, api: JsonRpcCaller):
             path: Path to the file to download.
         """
         result = workspace_download_file(api, path, token)
+        return str(result)
+
+    @mcp.tool()
+    def workspace_upload(token: str, filename: str) -> str:
+        """Create an upload URL for a file in the workspace.
+        
+        Args:
+            filename: Name of the file to create upload URL for.
+        """
+        result = workspace_upload(api, filename, token)
         return str(result)
