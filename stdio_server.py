@@ -1,14 +1,12 @@
 from fastmcp import FastMCP
 from json_rpc import JsonRpcCaller
 from workspace_tools import register_workspace_tools
-import json
 import sys
 from typing import Any, List
+import os
 
-with open("config.json", "r") as f:
-    config = json.load(f)
-
-workspace_api_url = config["workspace-url"]
+workspace_api_url = os.getenv("WORKSPACE_API_URL")
+token = os.getenv("KB_AUTH_TOKEN")
 
 # Initialize the JSON-RPC caller
 api = JsonRpcCaller(workspace_api_url)
