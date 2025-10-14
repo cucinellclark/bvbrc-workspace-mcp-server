@@ -10,6 +10,7 @@ with open("config.json", "r") as f:
 
 workspace_api_url = config["workspace-url"]
 port = config.get("port", 5000)
+mcp_url = config.get("mcp_url", "127.0.0.1")
 
 # Initialize the JSON-RPC caller
 api = JsonRpcCaller(workspace_api_url)
@@ -29,7 +30,7 @@ def health_check() -> str:
 def main() -> int:
     print(f"Starting BVBRC Workspace MCP FastMCP HTTP Server on port {port}...", file=sys.stderr)
     try:
-        mcp.run(transport="http", host="127.0.0.1", port=port)
+        mcp.run(transport="http", host=mcp_url, port=port)
     except KeyboardInterrupt:
         print("Server stopped.", file=sys.stderr)
     except Exception as e:
