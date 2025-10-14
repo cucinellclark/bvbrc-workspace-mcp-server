@@ -8,6 +8,8 @@ import os
 workspace_api_url = os.getenv("WORKSPACE_API_URL")
 token = os.getenv("KB_AUTH_TOKEN")
 
+# TODO: need to handle tokens passed to the functions
+
 # Initialize the JSON-RPC caller
 api = JsonRpcCaller(workspace_api_url)
 
