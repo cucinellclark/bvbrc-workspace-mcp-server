@@ -1,6 +1,7 @@
 from fastmcp import FastMCP
 from json_rpc import JsonRpcCaller
 from workspace_tools import register_workspace_tools
+from token_provider import TokenProvider
 import json
 import sys
 from typing import Any, List
@@ -12,14 +13,17 @@ workspace_api_url = config["workspace-url"]
 port = config.get("port", 5000)
 mcp_url = config.get("mcp_url", "127.0.0.1")
 
+# Initialize token provider for HTTP mode
+token_provider = TokenProvider(mode="http")
+
 # Initialize the JSON-RPC caller
 api = JsonRpcCaller(workspace_api_url)
 
 # Create FastMCP server
 mcp = FastMCP("BVBRC Workspace MCP Server")
 
-# Register workspace tools
-register_workspace_tools(mcp, api)
+# Register workspace tools with token provider
+register_workspace_tools(mcp, api, token_provider)
 
 # Add health check tool
 @mcp.tool()
