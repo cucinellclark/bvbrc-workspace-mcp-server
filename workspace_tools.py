@@ -52,12 +52,13 @@ def register_workspace_tools(mcp: FastMCP, api: JsonRpcCaller, token_provider: T
         return str(result)
 
     @mcp.tool()
-    def workspace_download_file_tool(token: Optional[str] = None, path: str = None) -> str:
+    def workspace_download_file_tool(token: Optional[str] = None, path: str = None, output_file: str = None) -> str:
         """Download a file from the workspace.
         
         Args:
             token: Authentication token (optional - will use default if not provided)
             path: Path to the file to download.
+            output_file: Name and path of the file to save the downloaded content to.
         """
         if not path:
             return "Error: path parameter is required"
@@ -67,7 +68,7 @@ def register_workspace_tools(mcp: FastMCP, api: JsonRpcCaller, token_provider: T
         if not auth_token:
             return "Error: No authentication token available"
         
-        result = workspace_download_file(api, path, auth_token)
+        result = workspace_download_file(api, path, auth_token, output_file)
         return str(result)
 
     @mcp.tool()

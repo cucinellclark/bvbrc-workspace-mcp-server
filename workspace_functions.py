@@ -46,7 +46,7 @@ def workspace_get_file_metadata(api: JsonRpcCaller, path: str, token: str) -> st
         return [f"Error getting file metadata: {str(e)}"]
 
 
-def workspace_download_file(api: JsonRpcCaller, path: str, token: str) -> str:
+def workspace_download_file(api: JsonRpcCaller, path: str, token: str, output_file: str = None) -> str:
     """
     Download a file from the workspace using the JSON-RPC API.
     
@@ -54,6 +54,7 @@ def workspace_download_file(api: JsonRpcCaller, path: str, token: str) -> str:
         api: JsonRpcCaller instance configured with workspace URL and token
         path: Path to the file to download
         token: Authentication token for API calls
+        output_file: Name and path of the file to save the downloaded content to.
     Returns:
         String representation of the downloaded file
     """
@@ -67,8 +68,13 @@ def workspace_download_file(api: JsonRpcCaller, path: str, token: str) -> str:
         
         response = requests.get(download_url, headers=headers)
         response.raise_for_status()
-        
-        return response.content
+
+        if output_file:
+            with open(output_file, 'wb') as file:
+                file.write(response.content)
+            return f"File downloaded and saved to {output_file}"
+        else:
+            return response.content
     except Exception as e:
         return [f"Error downloading file: {str(e)}"]
 
