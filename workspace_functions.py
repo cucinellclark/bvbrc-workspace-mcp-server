@@ -3,7 +3,6 @@ from typing import List, Any
 import requests
 import os
 
-
 def workspace_ls(api: JsonRpcCaller, paths: List[str], token: str) -> List[str]:
     """
     List workspace contents using the JSON-RPC API.
@@ -24,6 +23,36 @@ def workspace_ls(api: JsonRpcCaller, paths: List[str], token: str) -> List[str]:
         return result
     except Exception as e:
         return [f"Error listing workspace: {str(e)}"]
+
+def workspace_search(api: JsonRpcCaller, paths: List[str] = None, search_term: str = None, token: str = None) -> str:
+    """
+    Search the workspace for a given term.
+    """
+    if not paths:
+        user_id = _get_user_id_from_token(token)
+        if not user_id:
+            return [f"Error searching workspace: unable to derive user id from token"]
+        paths = [f"/{user_id}/home"]
+    if not search_term:
+        return [f"Error searching workspace: search_term parameter is required"]
+    
+    try:
+        result = api.call("Workspace.ls", {
+            "recursive": True,
+            "excludeDirectories": False,
+            "excludeObjects": False,
+            "includeSubDirs": True,
+            "paths": paths,
+            "query": {
+                "name": {
+                    "$regex": search_term,
+                    "$options": "i"
+                }
+            }
+        },1, token)
+        return result
+    except Exception as e:
+        return [f"Error searching workspace: {str(e)}"]
 
 def workspace_get_file_metadata(api: JsonRpcCaller, path: str, token: str) -> str:
     """

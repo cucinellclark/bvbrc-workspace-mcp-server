@@ -1,6 +1,6 @@
 
 from fastmcp import FastMCP
-from workspace_functions import workspace_ls, workspace_get_file_metadata, workspace_download_file, workspace_upload
+from workspace_functions import workspace_ls, workspace_get_file_metadata, workspace_download_file, workspace_upload, workspace_search
 from json_rpc import JsonRpcCaller
 from token_provider import TokenProvider
 from typing import List, Optional
@@ -30,6 +30,26 @@ def register_workspace_tools(mcp: FastMCP, api: JsonRpcCaller, token_provider: T
         print(f"paths: {paths}")
         print(f"token: {auth_token}")
         result = workspace_ls(api, paths, auth_token)
+        return str(result)
+
+    @mcp.tool()
+    def workspace_search_tool(token: Optional[str] = None, search_term: str = None, paths: List[str] = None) -> str:
+        """Search the workspace for a given term.
+        
+        Args:
+            token: Authentication token (optional - will use default if not provided)
+            search_term: Term to search the workspace for.
+            paths: Optional list of paths to search. If empty or None, searches root workspace.
+        """
+        if not search_term:
+            return "Error: search_term parameter is required"
+        
+        # Get the appropriate token
+        auth_token = token_provider.get_token(token)
+        if not auth_token:
+            return "Error: No authentication token available"
+        
+        result = workspace_search(api, paths, search_term, auth_token)
         return str(result)
 
     @mcp.tool()
