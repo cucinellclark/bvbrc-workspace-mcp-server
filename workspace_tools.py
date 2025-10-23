@@ -7,6 +7,7 @@ from workspace_functions import (
 )
 from json_rpc import JsonRpcCaller
 from token_provider import TokenProvider
+import json
 from typing import List, Optional
 
 def extract_userid_from_token(token: str = None) -> str:
@@ -218,13 +219,13 @@ def register_workspace_tools(mcp: FastMCP, api: JsonRpcCaller, token_provider: T
         return str(result)
 
     @mcp.tool()
-    def create_genome_group(token: Optional[str] = None, genome_group_name: str = None, genome_id_list: List[str] = None, genome_group_path: str = None) -> str:
+    def create_genome_group(token: Optional[str] = None, genome_group_name: str = None, genome_id_list: str = None, genome_group_path: str = None) -> str:
         """Create a genome group in the workspace.
 
         Args:
             token: Authentication token (optional - will use default if not provided)
             genome_group_name: Name of the genome group to create (used if genome_group_path not provided).
-            genome_id_list: List of genome IDs to add to the genome group.
+            genome_id_list: List of genome IDs to add to the genome group. Accepts multiple genome ids as a string with comma separation. Example: genome_id1,genome_id2,genome_id3,...
             genome_group_path: Full path for the genome group. If not provided, defaults to /<user_id>/home/<genome_group_name>.
         """
         if not genome_group_name:
@@ -254,20 +255,36 @@ def register_workspace_tools(mcp: FastMCP, api: JsonRpcCaller, token_provider: T
         return str(result)
 
     @mcp.tool()
-    def create_feature_group(token: Optional[str] = None, feature_group_name: str = None, feature_id_list: List[str] = None, feature_group_path: str = None) -> str:
+    def create_feature_group(token: Optional[str] = None, feature_group_name: str = None, feature_id_list: str = None, feature_group_path: str = None) -> str:
         """Create a feature group in the workspace.
 
         Args:
             token: Authentication token (optional - will use default if not provided)
             feature_group_name: Name of the feature group to create (used if feature_group_path not provided).
-            feature_id_list: List of feature IDs to add to the feature group.
+            feature_id_list: List of feature IDs as a string with comma separation to add to the feature group. Example: feature_id1,feature_id2,feature_id3,...
             feature_group_path: Full path for the feature group. If not provided, defaults to /<user_id>/home/<feature_group_name>.
         """
-        if not feature_group_name:
-            return "Error: feature_group_name parameter is required"
+        if not feature_group_name and not feature_group_path:
+            return "Error: feature_group_name or feature_group_path parameter is required"
+
+        if feature_group_name and feature_group_path:
+            return "Error: only one of feature_group_name or feature_group_path parameter can be provided"
 
         if not feature_id_list:
             return "Error: feature_id_list parameter is required"
+
+        # The LLM is consistently forgetting the final '.' in the feature IDs
+        feature_id_list = feature_id_list.split(',')
+        processed_feature_id_list = []
+        for feature_id in feature_id_list:
+            feature_id = feature_id.strip()
+            if len(feature_id) >= 4 and feature_id[-4] != '.':
+                # Insert '.' at fourth-to-last position
+                feature_id = feature_id[:-3] + '.' + feature_id[-3:]
+            processed_feature_id_list.append(feature_id)
+        feature_id_list = processed_feature_id_list
+
+        # TODO: include a feature id verification step to ensure the feature IDs are valid
 
         # Get the appropriate token
         auth_token = token_provider.get_token(token)
@@ -287,7 +304,7 @@ def register_workspace_tools(mcp: FastMCP, api: JsonRpcCaller, token_provider: T
         print(f"Creating feature group: {feature_group_name}, user_id: {user_id}, path: {feature_group_path}")
 
         result = workspace_create_feature_group(api, feature_group_path, feature_id_list, auth_token)
-        return str(result)
+        return json.dumps(result)
 
     @mcp.tool()
     def get_genome_group_ids(token: Optional[str] = None, genome_group_name: str = None, genome_group_path: str = None) -> List[str]:
@@ -326,7 +343,7 @@ def register_workspace_tools(mcp: FastMCP, api: JsonRpcCaller, token_provider: T
         print(f"Getting genome group IDs: {genome_group_name}, user_id: {user_id}, path: {genome_group_path}")
 
         result = workspace_get_genome_group_ids(api, genome_group_path, auth_token)
-        return str(result)
+        return result
 
     @mcp.tool()
     def get_feature_group_ids(token: Optional[str] = None, feature_group_name: str = None, feature_group_path: str = None) -> List[str]:
@@ -360,4 +377,4 @@ def register_workspace_tools(mcp: FastMCP, api: JsonRpcCaller, token_provider: T
         print(f"Getting feature group IDs: {feature_group_name}, user_id: {user_id}, path: {feature_group_path}")
 
         result = workspace_get_feature_group_ids(api, feature_group_path, auth_token)
-        return str(result)
+        return result

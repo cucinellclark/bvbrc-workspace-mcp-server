@@ -2,6 +2,7 @@ from json_rpc import JsonRpcCaller
 from typing import List, Any
 import requests
 import os
+import json
 
 def workspace_ls(api: JsonRpcCaller, paths: List[str], token: str) -> List[str]:
     """
@@ -322,7 +323,7 @@ def workspace_create_feature_group(api: JsonRpcCaller, feature_group_path: str, 
         result = api.call("Workspace.create", {
             "objects": [[feature_group_path, 'feature_group', {}, content]]
         },1, token)
-        return result
+        return result[0][0]
     except Exception as e:
         return [f"Error creating feature group: {str(e)}"]
 
@@ -394,24 +395,20 @@ def workspace_get_genome_group_ids(api: JsonRpcCaller, genome_group_path: str, t
     try:
         # Get the genome group object using workspace_get_object
         result = workspace_get_object(api, genome_group_path, metadata_only=False, token=token)
-
         # Check if there was an error
         if "error" in result:
             return [f"Error getting genome group: {result['error']}"]
-
         # Extract genome IDs from the data
-        data = result.get("data", {})
+        data = json.loads(result.get("data", {}))
         if not data or "id_list" not in data:
             return [f"Error: Genome group data not found or invalid structure"]
 
-        genome_ids = data["id_list"].get("genome_id", [])
-
+        genome_ids = data['id_list']['genome_id']
         # Ensure we return a list of strings
         if isinstance(genome_ids, list):
             return genome_ids
         else:
             return [str(genome_ids)]
-
     except Exception as e:
         return [f"Error getting genome group IDs: {str(e)}"]
 
@@ -428,11 +425,11 @@ def workspace_get_feature_group_ids(api: JsonRpcCaller, feature_group_path: str,
             return [f"Error getting feature group: {result['error']}"]
 
         # Extract feature IDs from the data
-        data = result.get("data", {})
+        data = json.loads(result.get("data", {}))
         if not data or "id_list" not in data:
             return [f"Error: Feature group data not found or invalid structure"]
 
-        feature_ids = data["id_list"].get("feature_id", [])
+        feature_ids = data['id_list']['feature_id']
 
         # Ensure we return a list of strings
         if isinstance(feature_ids, list):
