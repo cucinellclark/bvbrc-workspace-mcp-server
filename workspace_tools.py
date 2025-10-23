@@ -3,7 +3,7 @@ from fastmcp import FastMCP
 from workspace_functions import (
     workspace_ls, workspace_get_file_metadata, workspace_download_file,
     workspace_upload, workspace_search, workspace_create_genome_group,
-    workspace_create_feature_group
+    workspace_create_feature_group, workspace_get_genome_group_ids, workspace_get_feature_group_ids
 )
 from json_rpc import JsonRpcCaller
 from token_provider import TokenProvider
@@ -287,4 +287,77 @@ def register_workspace_tools(mcp: FastMCP, api: JsonRpcCaller, token_provider: T
         print(f"Creating feature group: {feature_group_name}, user_id: {user_id}, path: {feature_group_path}")
 
         result = workspace_create_feature_group(api, feature_group_path, feature_id_list, auth_token)
+        return str(result)
+
+    @mcp.tool()
+    def get_genome_group_ids(token: Optional[str] = None, genome_group_name: str = None, genome_group_path: str = None) -> List[str]:
+        """Get the IDs of the genomes in a genome group.
+
+        Args:
+            token: Authentication token (optional - will use default if not provided)
+            genome_group_name: Name of the genome group to get the IDs of.
+            genome_group_path: Full path for the genome group. If not provided, defaults to /<user_id>/home/Genome Groups/<genome_group_name>.
+
+            Only one of genome_group_name or genome_group_path parameter can be provided.
+
+        Returns:
+            List of genome IDs in the genome group.
+        """
+        if not genome_group_name and not genome_group_path:
+            return "Error: genome_group_name or genome_group_path parameter is required"
+        
+        if genome_group_name and genome_group_path:
+            return "Error: only one of genome_group_name or genome_group_path parameter can be provided"
+
+        # Get the appropriate token
+        auth_token = token_provider.get_token(token)
+        if not auth_token:
+            return "Error: No authentication token available"
+
+        # Extract user_id from token for path resolution
+        user_id = extract_userid_from_token(auth_token)
+        if not genome_group_path:
+            genome_group_path = f"{get_user_home_path(user_id)}/Genome Groups/{genome_group_name}"
+        else:
+            # If genome_group_path is provided and doesn't start with /, treat as relative to home
+            if not genome_group_path.startswith('/') and user_id:
+                genome_group_path = f"{get_user_home_path(user_id)}/{genome_group_path}"
+
+        print(f"Getting genome group IDs: {genome_group_name}, user_id: {user_id}, path: {genome_group_path}")
+
+        result = workspace_get_genome_group_ids(api, genome_group_path, auth_token)
+        return str(result)
+
+    @mcp.tool()
+    def get_feature_group_ids(token: Optional[str] = None, feature_group_name: str = None, feature_group_path: str = None) -> List[str]:
+        """Get the IDs of the features in a feature group.
+
+        Args:
+            token: Authentication token (optional - will use default if not provided)
+            feature_group_name: Name of the feature group to get the IDs of.
+            feature_group_path: Full path for the feature group. If not provided, defaults to /<user_id>/home/Feature Groups/<feature_group_name>.
+        """
+        if not feature_group_name and not feature_group_path:
+            return "Error: feature_group_name or feature_group_path parameter is required"
+
+        if feature_group_name and feature_group_path:
+            return "Error: only one of feature_group_name or feature_group_path parameter can be provided"
+
+        # Get the appropriate token
+        auth_token = token_provider.get_token(token)
+        if not auth_token:
+            return "Error: No authentication token available"
+
+        # Extract user_id from token for path resolution
+        user_id = extract_userid_from_token(auth_token)
+        if not feature_group_path:
+            feature_group_path = f"{get_user_home_path(user_id)}/Feature Groups/{feature_group_name}"
+        else:
+            # If feature_group_path is provided and doesn't start with /, treat as relative to home
+            if not feature_group_path.startswith('/') and user_id:
+                feature_group_path = f"{get_user_home_path(user_id)}/{feature_group_path}"
+
+        print(f"Getting feature group IDs: {feature_group_name}, user_id: {user_id}, path: {feature_group_path}")
+
+        result = workspace_get_feature_group_ids(api, feature_group_path, auth_token)
         return str(result)

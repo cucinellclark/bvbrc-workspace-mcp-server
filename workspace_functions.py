@@ -316,7 +316,7 @@ def workspace_create_feature_group(api: JsonRpcCaller, feature_group_path: str, 
         content = {
             'id_list': {
                 'feature_id': feature_id_list
-            }, 
+            },
             'name': feature_group_name
         }
         result = api.call("Workspace.create", {
@@ -325,3 +325,120 @@ def workspace_create_feature_group(api: JsonRpcCaller, feature_group_path: str, 
         return result
     except Exception as e:
         return [f"Error creating feature group: {str(e)}"]
+
+def workspace_get_object(api: JsonRpcCaller, path: str, metadata_only: bool = False, token: str = None) -> dict:
+    """
+    Get an object from the workspace using the JSON-RPC API.
+
+    Args:
+        api: JsonRpcCaller instance configured with workspace URL and token
+        path: Path to the object to retrieve
+        metadata_only: If True, only return metadata without the actual data
+        token: Authentication token for API calls
+    Returns:
+        Dictionary containing metadata and optionally data
+    """
+    if not path:
+        return {"error": "Invalid Path(s) to retrieve"}
+
+    try:
+        # Decode URL-encoded path
+        path = requests.utils.unquote(path)
+
+        # Call Workspace.get API
+        result = api.call("Workspace.get", {
+            "objects": [path],
+            "metadata_only": metadata_only
+        }, 1, token)
+
+        # Validate response structure
+        if not result or not result[0] or not result[0][0] or not result[0][0][0] or not result[0][0][0][4]:
+            return {"error": "Object not found"}
+
+        # Extract metadata from nested array structure
+        meta_array = result[0][0][0]
+        metadata = {
+            "name": meta_array[0],
+            "type": meta_array[1],
+            "path": meta_array[2],
+            "creation_time": meta_array[3],
+            "id": meta_array[4],
+            "owner_id": meta_array[5],
+            "size": meta_array[6],
+            "userMeta": meta_array[7],
+            "autoMeta": meta_array[8],
+            "user_permissions": meta_array[9],
+            "global_permission": meta_array[10],
+            "link_reference": meta_array[11]
+        }
+
+        # If metadata only, return just the metadata
+        if metadata_only:
+            return {"metadata": metadata}
+
+        # Get the actual data
+        data = result[0][0][1]
+
+        return {
+            "metadata": metadata,
+            "data": data
+        }
+
+    except Exception as e:
+        return {"error": f"Error getting workspace object: {str(e)}"}
+
+def workspace_get_genome_group_ids(api: JsonRpcCaller, genome_group_path: str, token: str) -> List[str]:
+    """
+    Get the IDs of the genomes in a genome group using the JSON-RPC API.
+    """
+    try:
+        # Get the genome group object using workspace_get_object
+        result = workspace_get_object(api, genome_group_path, metadata_only=False, token=token)
+
+        # Check if there was an error
+        if "error" in result:
+            return [f"Error getting genome group: {result['error']}"]
+
+        # Extract genome IDs from the data
+        data = result.get("data", {})
+        if not data or "id_list" not in data:
+            return [f"Error: Genome group data not found or invalid structure"]
+
+        genome_ids = data["id_list"].get("genome_id", [])
+
+        # Ensure we return a list of strings
+        if isinstance(genome_ids, list):
+            return genome_ids
+        else:
+            return [str(genome_ids)]
+
+    except Exception as e:
+        return [f"Error getting genome group IDs: {str(e)}"]
+
+def workspace_get_feature_group_ids(api: JsonRpcCaller, feature_group_path: str, token: str) -> List[str]:
+    """
+    Get the IDs of the features in a feature group using the JSON-RPC API.
+    """
+    try:
+        # Get the feature group object using workspace_get_object
+        result = workspace_get_object(api, feature_group_path, metadata_only=False, token=token)
+
+        # Check if there was an error
+        if "error" in result:
+            return [f"Error getting feature group: {result['error']}"]
+
+        # Extract feature IDs from the data
+        data = result.get("data", {})
+        if not data or "id_list" not in data:
+            return [f"Error: Feature group data not found or invalid structure"]
+
+        feature_ids = data["id_list"].get("feature_id", [])
+
+        # Ensure we return a list of strings
+        if isinstance(feature_ids, list):
+            return feature_ids
+        else:
+            return [str(feature_ids)]
+
+    except Exception as e:
+        return [f"Error getting feature group IDs: {str(e)}"]
