@@ -136,7 +136,8 @@ def _get_user_id_from_token(token: str) -> str:
     try:
         # Token format example: "un=username|..."; take first segment and strip prefix
         return token.split('|')[0].replace('un=','')
-    except Exception:
+    except Exception as e:
+        print(f"Error extracting user ID from token: {e}")
         return None
 
 def workspace_upload(api: JsonRpcCaller, filename: str, upload_dir: str = None, token: str = None) -> str:
@@ -286,3 +287,41 @@ def _upload_file_to_url(filename: str, upload_url: str, token: str) -> dict:
             
     except Exception as e:
         return {"success": False, "error": f"Upload failed: {str(e)}"}
+
+def workspace_create_genome_group(api: JsonRpcCaller, genome_group_path: str, genome_id_list: List[str], token: str) -> str:
+    """
+    Create a genome group in the workspace using the JSON-RPC API.
+    """
+    genome_group_name = genome_group_path.split('/')[-1]
+    try:
+        content = {
+            'id_list': {
+                'genome_id': genome_id_list
+            }, 
+            'name': genome_group_name
+        }
+        result = api.call("Workspace.create", {
+            "objects": [[genome_group_path, 'genome_group', {}, content]]
+        },1, token)
+        return result
+    except Exception as e:
+        return [f"Error creating genome group: {str(e)}"]
+
+def workspace_create_feature_group(api: JsonRpcCaller, feature_group_path: str, feature_id_list: List[str], token: str) -> str:
+    """
+    Create a feature group in the workspace using the JSON-RPC API.
+    """
+    feature_group_name = feature_group_path.split('/')[-1]
+    try:
+        content = {
+            'id_list': {
+                'feature_id': feature_id_list
+            }, 
+            'name': feature_group_name
+        }
+        result = api.call("Workspace.create", {
+            "objects": [[feature_group_path, 'feature_group', {}, content]]
+        },1, token)
+        return result
+    except Exception as e:
+        return [f"Error creating feature group: {str(e)}"]
