@@ -31,6 +31,25 @@ def health_check() -> str:
     """Health check endpoint"""
     return '{"status": "healthy", "service": "bvbrc-workspace-mcp"}'
 
+@mcp.custom_route("/.well-known/openid-configuration", methods=["GET"])
+def openid_configuration() -> str:
+    """
+    Serves the OIDC discovery document that ChatGPT expects.
+    """
+    config = {
+            "issuer": "https://www.bv-brc.org",
+            "authorization_endpoint": "https://dev-6.bv-brc.org/oauth2/authorize",
+            "token_endpoint": "https://dev-6.bv-brc.org/oauth2/token",
+            "registration_endpoint": "https://dev-6.bv-brc.org/oauth2/register", # 1
+            "response_types_supported": ["code"],
+            "grant_types_supported": ["authorization_code"],
+            "token_endpoint_auth_methods_supported": ["none", "client_secret_post"],
+            "code_challenge_methods_supported": ["S256"],
+            "scopes_supported": ["profile", "token"],
+            "claims_supported": ["sub", "api_token"]
+    }
+    return json.dumps(config)
+
 def main() -> int:
     print(f"Starting BVBRC Workspace MCP FastMCP HTTP Server on port {port}...", file=sys.stderr)
     try:
