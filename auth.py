@@ -35,7 +35,7 @@ def openid_configuration(request) -> JSONResponse:
     """
     print("Query params:", dict(request.query_params))
     print("Request path:", request.url.path)
-    url = "https://dev-9.bv-brc.org"
+    url = "https://dev-7.bv-brc.org"
     config = {
             "issuer": "https://www.bv-brc.org",
             "authorization_endpoint": f"{url}/oauth2/authorize",

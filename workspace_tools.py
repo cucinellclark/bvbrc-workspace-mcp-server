@@ -104,7 +104,7 @@ def register_workspace_tools(mcp: FastMCP, api: JsonRpcCaller, token_provider: T
         Returns:
             String representation of workspace contents.
         """
-        # Get the appropriate token
+        # Get the appropriate token (automatically checks Authorization header in HTTP mode)
         auth_token = token_provider.get_token(token)
         if not auth_token:
             return "Error: No authentication token available"
@@ -129,7 +129,7 @@ def register_workspace_tools(mcp: FastMCP, api: JsonRpcCaller, token_provider: T
         if not search_term:
             return "Error: search_term parameter is required"
 
-        # Get the appropriate token
+        # Get the appropriate token (automatically checks Authorization header in HTTP mode)
         auth_token = token_provider.get_token(token)
         if not auth_token:
             return "Error: No authentication token available"
